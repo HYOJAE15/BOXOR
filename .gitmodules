@@ -1,6 +1,6 @@
 [submodule "dnn/mmsegmentation"]
 	path = dnn/mmsegmentation
 	url = https://github.com/bhyun-kim/mmsegmentation.git
-[submodule "yolov5"]
-	path = yolov5
+[submodule "dnn/yolov5"]
+	path = dnn/yolov5
 	url = https://github.com/ultralytics/yolov5.git
