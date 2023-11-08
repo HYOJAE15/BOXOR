@@ -37,6 +37,7 @@ from components.widgets.treeView import TreeView
 
 from components.dnnModel.damage import DL_Model
 
+import torch
 
 sys.path.append("./dnn/mmsegmentation")
 from mmseg.apis import init_segmentor, inference_segmentor
@@ -86,6 +87,11 @@ class MainWindow(QMainWindow, form_class_main,
         self.stopwatch = False
         self.circle = True
         
+        # Yolo 모델 로드
+
+        self.yolo_det = torch.hub.load('./dnn/checkpoints/yolo_detection/yolo_det.py')
+        self.yolo_seg = torch.hub.load('./dnn/checkpoints/yolo_segmentation/yolo_seg.py')
+        
         
         # 리스트위젯 에서 클릭된 클래스로 checkpoint 파일 불러오자 
 
@@ -95,32 +101,6 @@ class MainWindow(QMainWindow, form_class_main,
                                     checkpoint_file, 
                                     device='cuda:0')
 
-
-        # config_file_efflorescence = './dnn/checkpoints/2022.07.28_cgnet_1024x1024_concrete_efflorescence/cgnet_1024x1024_60k_cityscapes.py'
-        # checkpoint_file_efflorescence = './dnn/checkpoints/2022.07.28_cgnet_1024x1024_concrete_efflorescence/cgnet_1024x1024_iter_60000.pth'
-        # self.model_efflorescence = init_segmentor(config_file_efflorescence, 
-        #                                           checkpoint_file_efflorescence,
-        #                                           device='cuda:0')
-        
-        # config_file_rebarexposure = './dnn/checkpoints/cgnet_rebarexposure/cgnet_1024x1024_concrete_rebar_60k_cityscapes.py'
-        # checkpoint_file_rebarexposure = './dnn/checkpoints/cgnet_rebarexposure/iter_60000.pth'
-        # self.model_rebarexposure = init_segmentor(config_file_rebarexposure, 
-        #                                           checkpoint_file_rebarexposure,
-        #                                           device='cuda:0')
-
-        # config_file_spalling = './dnn/checkpoints/cgnet_spalling/cgnet_1024x1024_concrete_spalling_60k_cityscapes.py'
-        # checkpoint_file_spalling = './dnn/checkpoints/cgnet_spalling/iter_60000.pth'
-        # self.model_spalling = init_segmentor(config_file_spalling, 
-        #                                           checkpoint_file_spalling,
-        #                                           device='cuda:0')
-        
-
-        # self.model_list = [
-        #                     self.model, 
-        #                     self.model_efflorescence, 
-        #                     self.model_rebarexposure,
-        #                     self.model_spalling
-        #                    ]
 
         
         # treeview setting 
