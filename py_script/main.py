@@ -16,7 +16,7 @@ from PyQt5.QtCore import *
 
 from scipy import ndimage
 
-from utils.utils import *
+from utils_boxor.utils import *
 
 
 from components.actions.actionFile import ActionFile
@@ -88,9 +88,9 @@ class MainWindow(QMainWindow, form_class_main,
         self.circle = True
         
         # Yolo 모델 로드
-
-        self.yolo_det = torch.hub.load('./dnn/checkpoints/yolo_detection/yolo_det.py')
-        self.yolo_seg = torch.hub.load('./dnn/checkpoints/yolo_segmentation/yolo_seg.py')
+        self.yolo_det = torch.hub.load('./yolov5', 'custom', path='./dnn/checkpoints/yolo_detection/yolo_det.pt', source='local', force_reload=True)
+        # self.yolo_seg = torch.hub.load('./yolov5', 'custom', path='./dnn/checkpoints/yolo_segmentation/yolo_seg.pt', source='local', force_reload=True)
+        self.yolo_seg = './dnn/checkpoints/yolo_segmentation/yolo_seg.pt'
         
         
         # 리스트위젯 에서 클릭된 클래스로 checkpoint 파일 불러오자 
@@ -152,6 +152,7 @@ class MainWindow(QMainWindow, form_class_main,
         self.roiAutoLabelButton.clicked.connect(self.showRoiMenu)
 
         self.getPointsButton.clicked.connect(self.getPoints)
+        self.yoloDetectButton.clicked.connect(self.yoloDetection)
         #self.roiAutoLabelButton.clicked.connect(self.runRoiAutoLabel)
     
         # 8. handMoveTool
@@ -161,7 +162,7 @@ class MainWindow(QMainWindow, form_class_main,
         self.custom_cursor = QCursor(self.scaled_icon)
 
         
-
+    
     def storeXY(self, event):
         if self.ControlKey:
             self.img_v_x = event.pos().x()

@@ -2,7 +2,7 @@
 from re import L
 from PyQt5 import uic
 from PyQt5.QtWidgets import *
-from utils.utils import *
+from utils_boxor.utils import *
 
 
 brushMenu_ui = '../../ui_design/createNewProject.ui'

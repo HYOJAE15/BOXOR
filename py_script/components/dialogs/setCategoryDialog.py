@@ -4,7 +4,7 @@ from PyQt5 import uic
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import QColor
 from PyQt5.QtCore import Qt
-from utils.utils import *
+from utils_boxor.utils import *
 
 
 brushMenu_ui = '../../ui_design/setCategoryInfo.ui'

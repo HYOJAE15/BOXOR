@@ -13,7 +13,24 @@ from PyQt5.QtCore import *
 
 import csv
 
-from utils.utils import *
+from utils_boxor.utils import *
+
+import torch
+
+from pathlib import Path
+
+import platform
+
+from ultralytics.utils.plotting import Annotator, colors
+
+sys.path.append("./yolov5")
+from utils.dataloaders import LoadImages
+from models.common import DetectMultiBackend
+from models.experimental import attempt_load
+from utils.torch_utils import select_device
+from utils.general import (check_img_size, Profile, non_max_suppression, scale_boxes)
+from utils.segment.general import process_mask
+
 
 sys.path.append("./dnn/mmsegmentation")
 from mmseg.apis import inference_segmentor
@@ -703,5 +720,141 @@ class AutoLabelButton :
         self.resize_image()
 
 
+    def yoloDetection(self):
+        print("yolo")
         
+        # Inference Detection model
+        # self.yolo_result = self.yolo_det(self.img)
+        # self.yolo_result.print()
+        # result_json = self.yolo_result.pandas().xyxy[0].to_json(orient="records")
+        # print(result_json)
+        # self.yolo_result.show()
+
+        # Inference Segmentation model
+        
+        # Attribute
+        conf_thres=0.25 # confidence threshold
+        iou_thres=0.45 # NMS IOU threshold
+        max_det=1000 # maximum detections per image
+        device = select_device('')
+        imgsz = (640, 640)
+        classes = None
+        agnostic_nms=False # class-agnostic NMS
+        line_thickness=3 # bounding box thickness (pixels)
     
+        
+        # Load Model
+        model = DetectMultiBackend(self.yolo_seg, device=device, dnn=False, data=None, fp16=False)
+        stride, names, pt = model.stride, model.names, model.pt
+        imgsz = check_img_size(imgsz, s=stride)  # check image size
+        
+        # Data Loader
+        bs = 1
+        dataset = LoadImages(self.imgPath, img_size=imgsz, stride=stride, auto=pt, vid_stride=1)
+        vid_path, vid_writer = [None] * bs, [None] * bs
+
+        # Run inference
+        model.warmup(imgsz=(1 if pt else bs, 3, *imgsz))  # warmup
+        seen, windows, dt = 0, [], (Profile(), Profile(), Profile())
+        for path, im, im0s, vid_cap, s in dataset:
+            with dt[0]:
+                im = torch.from_numpy(im).to(model.device)
+                im = im.half() if model.fp16 else im.float()  # uint8 to fp16/32
+                im /= 255  # 0 - 255 to 0.0 - 1.0
+                if len(im.shape) == 3:
+                    im = im[None]  # expand for batch dim
+
+            # Inference
+            with dt[1]:
+                visualize = False
+                pred, proto = model(im, augment=False, visualize=visualize)[:2]
+
+            # NMS
+            with dt[2]:
+                pred = non_max_suppression(pred, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det, nm=32)
+
+            print(f"prediction: {pred}")
+
+            print(f"pred[0]: {pred[0]}")
+            
+            
+            
+            # Process predictions
+            for i, det in enumerate(pred):  # per image
+                seen += 1
+
+                p, im0, frame = path, im0s.copy(), getattr(dataset, 'frame', 0)
+
+                p = Path(p)  # to Path
+                annotator = Annotator(im0, line_width=line_thickness, example=str(names))
+                if len(det):
+                    masks = process_mask(proto[i], det[:, 6:], det[:, :4], im.shape[2:], upsample=True)  # HWC
+                    det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], im0.shape).round()  # rescale boxes to im0 size
+                
+                # Print results
+                for c in det[:, 5].unique():
+                    n = (det[:, 5] == c).sum()  # detections per class
+                    s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
+
+                # Mask plotting
+                # print(torch.as_tensor(im0, dtype=torch.float16).to(device).permute(2, 0, 1).flip(0).contiguous())
+                # print(im[i])
+                # annotator.masks(
+                #     masks,
+                #     colors=[colors(x, True) for x in det[:, 5]],
+                #     im_gpu=torch.as_tensor(im0, dtype=torch.float16).to(device).permute(2, 0, 1).flip(0).contiguous() / im[i])
+                
+                # Write results
+                for j, (*xyxy, conf, cls) in enumerate(reversed(det[:, :6])):
+                    c = int(cls)  # integer class
+                    label = (f'{names[c]} {conf:.2f}')
+                    annotator.box_label(xyxy, label, color=colors(c, True))
+                    # annotator.draw.polygon(segments[j], outline=colors(c, True), width=3)
+            
+                
+                # Stream results
+                im0 = annotator.result()
+                if platform.system() == 'Linux' and p not in windows:
+                    windows.append(p)
+                    cv2.namedWindow(str(p), cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)  # allow window resize (Linux)
+                    cv2.resizeWindow(str(p), im0.shape[1], im0.shape[0])
+                cv2.imshow(str(p), im0)
+                if cv2.waitKey(1) == ord('q'):  # 1 millisecond
+                    exit()
+
+
+
+        if len(pred[0])>0:
+            print(f"mask: {masks}")
+            print(f"mask type: {type(masks)}")
+            mask_np = masks.cpu().numpy()
+            print(f"mask_np: {mask_np}")
+            print(f"mask_np type: {type(mask_np)}")
+            print(f"mask_np unique: {np.unique(mask_np)}")
+            print(f"mask_np shape: {mask_np.shape}")
+            print()
+            
+        
+        
+            
+            
+        
+        
+        
+        
+        
+        
+        
+        
+        # w = str(self.yolo_seg[0] if isinstance(self.yolo_seg, list) else self.yolo_seg)
+        # pt, jit, onnx, xml, engine, coreml, saved_model, pb, tflite, edgetpu, tfjs, paddle, triton = DetectMultiBackend._model_type(w)
+        # fp16 = pt
+        # cuda = torch.cuda.is_available() and device.type != 'cpu'  # use CUDA
+        
+        # model = attempt_load(self.yolo_seg if isinstance(self.yolo_seg, list) else w, device=device, inplace=True, fuse=True)
+        # stride = max(int(model.stride.max()), 32)  # model stride
+        # names = model.module.names if hasattr(model, 'module') else model.names  # get class names
+        # model.half() if fp16 else model.float()
+        # self.yolo_seg_model = model  # explicitly assign for to(), cpu(), cuda(), half()
+
+        

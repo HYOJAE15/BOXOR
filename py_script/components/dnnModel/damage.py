@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
-from utils.utils import *
+from utils_boxor.utils import *
 
 sys.path.append("./dnn/mmsegmentation")
 from mmseg.apis import init_segmentor

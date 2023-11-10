@@ -2,7 +2,7 @@
 from PyQt5 import uic
 from PyQt5.QtWidgets import *
 from numpy import number
-from utils.utils import *
+from utils_boxor.utils import *
 
 brushMenu_ui = '../../ui_design/brushMenuDialog.ui'
 
