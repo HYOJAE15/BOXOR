@@ -152,7 +152,10 @@ class MainWindow(QMainWindow, form_class_main,
         self.roiAutoLabelButton.clicked.connect(self.showRoiMenu)
 
         self.getPointsButton.clicked.connect(self.getPoints)
+        
+        # 8. yolo Detect button
         self.yoloDetectButton.clicked.connect(self.yoloDetection)
+        self.yoloSegmentButton.clicked.connect(self.yoloSegmentation)
         #self.roiAutoLabelButton.clicked.connect(self.runRoiAutoLabel)
     
         # 8. handMoveTool

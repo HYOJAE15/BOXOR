@@ -28,8 +28,8 @@ from utils.dataloaders import LoadImages
 from models.common import DetectMultiBackend
 from models.experimental import attempt_load
 from utils.torch_utils import select_device
-from utils.general import (check_img_size, Profile, non_max_suppression, scale_boxes)
-from utils.segment.general import process_mask
+from utils.general import (check_img_size, Profile, non_max_suppression, scale_boxes, scale_segments)
+from utils.segment.general import process_mask, masks2segments
 
 
 sys.path.append("./dnn/mmsegmentation")
@@ -720,17 +720,41 @@ class AutoLabelButton :
         self.resize_image()
 
 
-    def yoloDetection(self):
-        print("yolo")
-        
-        # Inference Detection model
-        # self.yolo_result = self.yolo_det(self.img)
-        # self.yolo_result.print()
-        # result_json = self.yolo_result.pandas().xyxy[0].to_json(orient="records")
-        # print(result_json)
-        # self.yolo_result.show()
+    def read_image_label(self, path_to_img: str, path_to_txt: str, normilize: bool = True):
+        # read image
+        image = cv2.imread(path_to_img)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        img_h, img_w = image.shape[:2]
+    
+        # read .txt file for this image
+        with open(path_to_txt, "r") as f:
+            
+            txt_file = f.readlines()
+            
+            for line in txt_file:
+                line = line.split()
+                cls_idx = int(line[0]) + 1
+                coords = line[1:]
+                polygon = np.array([[eval(x), eval(y)] for x, y in zip(coords[0::2], coords[1::2])]) # convert list of coordinates to numpy massive
+                
+                # Convert normilized coordinates of polygons to coordinates of image
+                polygon[:,0] = polygon[:,0]*img_w
+                polygon[:,1] = polygon[:,1]*img_h
+                polygon = polygon.astype(np.int)
+                
+                # Fill the Ploygon label
+                cv2.fillPoly(self.label, pts=[polygon], color=(cls_idx, cls_idx, cls_idx))
 
+    def yoloDetection(self):
+        # Inference Detection model
+        self.yolo_result = self.yolo_det(self.img)
+        self.yolo_result.print()
+        result_json = self.yolo_result.pandas().xyxy[0].to_json(orient="records")
+        print(result_json)
+        
+    def yoloSegmentation(self):
         # Inference Segmentation model
+        ## class: {0: 'nusu', 1: 'baektae', 2: 'bakri', 3: 'bakrak', 4: 'kyunyeol', 5: 'cheolgeunnochul', 6: 'chungbunli', 7: 'kyunyeolbosu'}
         
         # Attribute
         conf_thres=0.25 # confidence threshold
@@ -742,7 +766,6 @@ class AutoLabelButton :
         agnostic_nms=False # class-agnostic NMS
         line_thickness=3 # bounding box thickness (pixels)
     
-        
         # Load Model
         model = DetectMultiBackend(self.yolo_seg, device=device, dnn=False, data=None, fp16=False)
         stride, names, pt = model.stride, model.names, model.pt
@@ -772,12 +795,6 @@ class AutoLabelButton :
             # NMS
             with dt[2]:
                 pred = non_max_suppression(pred, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det, nm=32)
-
-            print(f"prediction: {pred}")
-
-            print(f"pred[0]: {pred[0]}")
-            
-            
             
             # Process predictions
             for i, det in enumerate(pred):  # per image
@@ -791,70 +808,39 @@ class AutoLabelButton :
                     masks = process_mask(proto[i], det[:, 6:], det[:, :4], im.shape[2:], upsample=True)  # HWC
                     det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], im0.shape).round()  # rescale boxes to im0 size
                 
-                # Print results
-                for c in det[:, 5].unique():
-                    n = (det[:, 5] == c).sum()  # detections per class
-                    s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
+                if len(pred[0])>0:
+        
+                    # Segments
+                    segments = [
+                        scale_segments(im.shape[2:], x, im0.shape, normalize=True)
+                        for x in reversed(masks2segments(masks))]
 
-                # Mask plotting
-                # print(torch.as_tensor(im0, dtype=torch.float16).to(device).permute(2, 0, 1).flip(0).contiguous())
-                # print(im[i])
-                # annotator.masks(
-                #     masks,
-                #     colors=[colors(x, True) for x in det[:, 5]],
-                #     im_gpu=torch.as_tensor(im0, dtype=torch.float16).to(device).permute(2, 0, 1).flip(0).contiguous() / im[i])
-                
-                # Write results
-                for j, (*xyxy, conf, cls) in enumerate(reversed(det[:, :6])):
-                    c = int(cls)  # integer class
-                    label = (f'{names[c]} {conf:.2f}')
-                    annotator.box_label(xyxy, label, color=colors(c, True))
-                    # annotator.draw.polygon(segments[j], outline=colors(c, True), width=3)
-            
-                
-                # Stream results
-                im0 = annotator.result()
-                if platform.system() == 'Linux' and p not in windows:
-                    windows.append(p)
-                    cv2.namedWindow(str(p), cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)  # allow window resize (Linux)
-                    cv2.resizeWindow(str(p), im0.shape[1], im0.shape[0])
-                cv2.imshow(str(p), im0)
-                if cv2.waitKey(1) == ord('q'):  # 1 millisecond
-                    exit()
+                    # Print results
+                    for c in det[:, 5].unique():
+                        n = (det[:, 5] == c).sum()  # detections per class
+                        s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
 
+                    
+                    self.txt_path = self.labelPath.replace(".png", "")
+                    if os.path.isfile(f'{self.txt_path}.txt'):
+                        os.remove(f'{self.txt_path}.txt')
 
-
+                    # Write results
+                    for j, (*xyxy, conf, cls) in enumerate(reversed(det[:, :6])):
+                        seg = segments[j].reshape(-1)  # (n,2) to (n*2)
+                        line = (cls, *seg)  # label format
+                        with open(f'{self.txt_path}.txt', 'a') as f:
+                            f.write(('%g ' * len(line)).rstrip() % line + '\n')
+                        
         if len(pred[0])>0:
-            print(f"mask: {masks}")
-            print(f"mask type: {type(masks)}")
-            mask_np = masks.cpu().numpy()
-            print(f"mask_np: {mask_np}")
-            print(f"mask_np type: {type(mask_np)}")
-            print(f"mask_np unique: {np.unique(mask_np)}")
-            print(f"mask_np shape: {mask_np.shape}")
-            print()
             
-        
-        
+            self.read_image_label(path_to_img=self.imgPath, 
+                                  path_to_txt=f"{self.txt_path}.txt", 
+                                  normilize=True)
             
-            
-        
-        
-        
-        
-        
-        
-        
-        
-        # w = str(self.yolo_seg[0] if isinstance(self.yolo_seg, list) else self.yolo_seg)
-        # pt, jit, onnx, xml, engine, coreml, saved_model, pb, tflite, edgetpu, tfjs, paddle, triton = DetectMultiBackend._model_type(w)
-        # fp16 = pt
-        # cuda = torch.cuda.is_available() and device.type != 'cpu'  # use CUDA
-        
-        # model = attempt_load(self.yolo_seg if isinstance(self.yolo_seg, list) else w, device=device, inplace=True, fuse=True)
-        # stride = max(int(model.stride.max()), 32)  # model stride
-        # names = model.module.names if hasattr(model, 'module') else model.names  # get class names
-        # model.half() if fp16 else model.float()
-        # self.yolo_seg_model = model  # explicitly assign for to(), cpu(), cuda(), half()
-
+            self.colormap = blendImageWithColorMap(self.img, self.label, self.label_palette, self.alpha)
+            self.pixmap = QPixmap(cvtArrayToQImage(self.colormap))
+            self.resize_image()
+        else :
+            print(f"No detection results")
         
