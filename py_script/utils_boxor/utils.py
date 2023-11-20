@@ -8,10 +8,6 @@ import numpy as np
 from PyQt5.QtGui import QImage
 from PyQt5.QtCore import QPoint
 
-sys.path.append("./dnn/mmsegmentation")
-from mmseg.apis import inference_segmentor
-
-
 def imread(imgPath):
     img = cv2.imdecode(np.fromfile(imgPath, dtype=np.uint8), cv2.IMREAD_UNCHANGED)
     if img.ndim == 3 : 
@@ -127,64 +123,6 @@ def points_between(x1, y1, x2, y2):
         np.round(np.linspace(x1, x2, count)).astype(np.int32),
         np.round(np.linspace(y1, y2, count)).astype(np.int32)
     )
-
-def histEqualization_gr (img):
-    ## [Convert to grayscale(binary)]
-    src_gr = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    ## [Convert to grayscale(binary)]
-
-    ## [Apply Histogram Equalization]
-    dst_gr = cv2.equalizeHist(src_gr)
-    ## [Apply Histogram Equalization]
-
-    ## [Convert to bgrimage]
-    dst_gr_bgr = cv2.cvtColor(dst_gr, cv2.COLOR_GRAY2BGR)
-    ## [Convert to bgrimage]
-    
-    return dst_gr_bgr
-
-def histEqualization_hsv (img):
-    # hsv 컬러 형태로 변형합니다.
-    src_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    # h(hue: 색상), s(saturation: 채도), v(value: 명도(색의 밝기))로 컬러 영상을 분리 합니다. 
-    h, s, v = cv2.split(src_hsv)
-    # v(value: 명도)값을 히스토그램 평활화를 합니다.
-    dst_hsv_v = cv2.equalizeHist(v)
-    # h,s,equalizedV를 합쳐서 새로운 hsv 이미지를 만듭니다.
-    dst_hsv_merged = cv2.merge([h,s,dst_hsv_v])
-    # 마지막으로 hsv2를 다시 BGR 형태로 변경합니다.
-    dst_hsv_merged_bgr = cv2.cvtColor(dst_hsv_merged, cv2.COLOR_HSV2BGR)
-
-    return dst_hsv_merged_bgr
-
-def histEqualization_ycc (img):
-    # YCrCb 컬러 형태로 변환합니다.
-    src_ycc = cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)
-    # y(휘도(색의 밝기)), Cr(색차 성분), Cb(색차 성분)로 컬러 영상을 분리 합니다.
-    y, Cr, Cb = cv2.split(src_ycc)
-    # y값을 히스토그램 평활화를 합니다.
-    dst_ycc_y = cv2.equalizeHist(y)
-    # equalizedY, Cr, Cb를 합쳐서 새로운 yCrCb 이미지를 만듭니다.
-    dst_ycc_merged = cv2.merge([dst_ycc_y, Cr, Cb])
-    # 마지막으로 yCrCb2를 다시 BGR 형태로 변경합니다.
-    dst_ycc_merged_bgr = cv2.cvtColor(dst_ycc_merged, cv2.COLOR_YCrCb2BGR)
-
-    return dst_ycc_merged_bgr
-
-
-def pointsRoi(model, src, label, label_segmentation,y_start, y_end, x_start, x_end):
-        
-    crop_img = src[y_start: y_end, x_start: x_end, :]
-    result = inference_segmentor(model, crop_img)
-    
-    idx = np.argwhere(result[0] == 1)
-    y_idx, x_idx = idx[:, 0], idx[:, 1]
-    x_idx = x_idx + x_start
-    y_idx = y_idx + y_start
-
-    label[y_idx, x_idx] = label_segmentation
-
-    return label
 
 def make_cityscapes_format_points (image, save_dir, damage_type) :
     temp_img = cv2.imdecode(np.fromfile(image, dtype=np.uint8), cv2.IMREAD_UNCHANGED)

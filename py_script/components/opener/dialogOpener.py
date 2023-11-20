@@ -24,52 +24,7 @@ class dialogOpener :
         self.setCategoryDialog.createButton.clicked.connect(self.createProjectHeader)
         self.setCategoryDialog.exec()
 
-    def openStopwatchDialog (self, event):
-        print("opendialog: stopwatch")
-
-        
-        if self.stopwatch :
-
-            from components.dialogs.stopwatchDialog import ClockApp
-        
-        elif self.stopwatch == False:
-            
-            del ClockApp
-        
-        # from kivy.core.text import LabelBase
-
-        # ClockApp().run()
-        # LabelBase.register(name='Roboto',
-        #                 fn_regular='./font/Roboto-Thin.ttf',
-        #                 fn_bold='./font/Roboto-Medium.ttf')
-        
-        
-        # if self.stopwatch == True :
-        #     from components.dialogs.stopwatchDialog import ClockApp
-        #     from kivy.core.text import LabelBase
-            
-        #     ClockApp().run()
-        #     LabelBase.register(name='Roboto',
-        #                 fn_regular='./font/Roboto-Thin.ttf',
-        #                 fn_bold='./font/Roboto-Medium.ttf')
-
-        
-        # if self.stopwatch == False :
-        #     from components.dialogs.stopwatchDialog import ClockApp
-        #     from kivy.core.window import Window
-        #     from kivy.app import App
-            
-        #     ClockApp().run()
-        #     LabelBase.register(name='Roboto',
-        #                 fn_regular='./font/Roboto-Thin.ttf',
-        #                 fn_bold='./font/Roboto-Medium.ttf')
-
-
-        #     App.stop()
-        #     Window.close()
-            
-        
-
+    
     def openBrushDialog(self, event):
 
         if hasattr(self, 'brushMenu'):
@@ -77,8 +32,6 @@ class dialogOpener :
 
         self.use_brush = True
         self.brushButton.setChecked(True)
-        self.roiAutoLabelButton.setChecked(False)
-        print(f" openBrushDialog {self.brushSize}")
         self.brushMenu = BrushMenu()
         self.brushMenu.lineEdit.setText(f'{self.brushSize} px')
         if self.brushSize > 2 :
@@ -102,7 +55,6 @@ class dialogOpener :
 
         
     def openEraseDialog(self, event):
-        print("erase")
         self.eraseButton.setChecked(True)
         self.use_erase = True
         self.eraseMenu = EraseMenu()
