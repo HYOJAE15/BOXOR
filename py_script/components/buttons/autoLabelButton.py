@@ -52,22 +52,23 @@ class AutoLabelButton :
                 line = line.split()
                 cls_idx = int(line[0]) + 1
                 coords = line[1:]
-                polygon = np.array([[eval(x), eval(y)] for x, y in zip(coords[0::2], coords[1::2])]) # convert list of coordinates to numpy massive
-                
-                # Convert normilized coordinates of polygons to coordinates of image
-                polygon[:,0] = polygon[:,0]*img_w
-                polygon[:,1] = polygon[:,1]*img_h
-                polygon = polygon.astype(np.int)
-                
-                # Fill the Ploygon label
-                cv2.fillPoly(self.label, pts=[polygon], color=(cls_idx, cls_idx, cls_idx))
+                if coords:
+                    polygon = np.array([[eval(x), eval(y)] for x, y in zip(coords[0::2], coords[1::2])]) # convert list of coordinates to numpy massive
+                    
+                    # Convert normilized coordinates of polygons to coordinates of image
+                    polygon[:,0] = polygon[:,0]*img_w
+                    polygon[:,1] = polygon[:,1]*img_h
+                    polygon = polygon.astype(np.int)
+                    
+                    # Fill the Ploygon label
+                    cv2.fillPoly(self.label, pts=[polygon], color=(cls_idx, cls_idx, cls_idx))
 
-    def yoloDetection(self):
-        # Inference Detection model
-        self.yolo_result = self.yolo_det(self.img)
-        self.yolo_result.print()
-        result_json = self.yolo_result.pandas().xyxy[0].to_json(orient="records")
-        print(result_json)
+    # def yoloDetection(self):
+    #     # Inference Detection model
+    #     self.yolo_result = self.yolo_det(self.img)
+    #     self.yolo_result.print()
+    #     result_json = self.yolo_result.pandas().xyxy[0].to_json(orient="records")
+    #     print(result_json)
         
     def yoloSegmentation(self):
         # Inference Segmentation model

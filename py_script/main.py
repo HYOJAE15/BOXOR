@@ -75,7 +75,7 @@ class MainWindow(QMainWindow, form_class_main,
         self.circle = True
         
         # Yolo 모델 로드
-        self.yolo_det = torch.hub.load('./yolov5', 'custom', path='./dnn/checkpoints/yolo_detection/yolo_det.pt', source='local', force_reload=True)
+        # self.yolo_det = torch.hub.load('./yolov5', 'custom', path='./dnn/checkpoints/yolo_detection/yolo_det.pt', source='local', force_reload=True)
         self.yolo_seg = './dnn/checkpoints/yolo_segmentation/yolo_seg.pt'
         
         # treeview setting 
@@ -117,7 +117,7 @@ class MainWindow(QMainWindow, form_class_main,
         self.listWidget.itemClicked.connect(self.getListWidgetIndex)
         
         # 6. yolo Detect button
-        self.yoloDetectButton.clicked.connect(self.yoloDetection)
+        # self.yoloDetectButton.clicked.connect(self.yoloDetection)
         self.yoloSegmentButton.clicked.connect(self.yoloSegmentation)
         #self.roiAutoLabelButton.clicked.connect(self.runRoiAutoLabel)
     
@@ -538,12 +538,12 @@ class MainWindow(QMainWindow, form_class_main,
             # Save the image
             if self.ControlKey : 
                 
-                # imwrite(self.labelPath, self.label)
-                # self.saveImgName = os.path.basename(self.imgPath)
-                # self.situationLabel.setText(self.saveImgName + "을(를) 저장하였습니다.")
+                imwrite(self.labelPath, self.label)
+                self.saveImgName = os.path.basename(self.imgPath)
+                self.situationLabel.setText(self.saveImgName + "을(를) 저장하였습니다.")
                 
-                print("quantify")
-                self.quantifyDamage()
+                # print("quantify")
+                # self.quantifyDamage()
 
             
         # Delete Image
