@@ -16,6 +16,13 @@ import torch
 
 from pathlib import Path
 
+from skimage.measure import label, regionprops_table
+from skimage.morphology import medial_axis
+
+import tqdm
+
+import json
+
 from ultralytics.utils.plotting import Annotator, colors
 
 sys.path.append("./yolov5")
@@ -153,4 +160,151 @@ class AutoLabelButton :
             self.resize_image()
         else :
             print(f"No detection results")
+
+    def create_distance_map(self, mask):
+        """
+        Create distance map from mask
+        Args:
+            mask (ndarray): The mask image. The shape is (H, W).
+        Returns:
+            distance_map (ndarray): The distance map. The shape is (H, W).
+        """
+
+        dist, skel = medial_axis(mask, return_distance=True)
+        distance_map = dist * skel
+
+        return distance_map
+
+
+    def _calculate_crack_width_length(self, crack_mask, distance_map):
+        """
+        Calculate crack width and length
+        Args: 
+            crack_mask (ndarray): The crack mask image. The shape is (H, W).
+            distance_map (ndarray): The distance map. The shape is (H, W).
+        Returns:
+            crack_width (float): The crack width.
+            crack_length (float): The crack length.
+        """
+        crack_distance_map = distance_map * crack_mask
+
+        crack_width = np.mean(crack_distance_map[crack_distance_map > 0])
+
+        crack_length = np.sum(crack_distance_map > 0)
+
+        return crack_width, crack_length
+
+
+
+    def quantifyDamage(self):
+        print("quantifyDamage")
         
+        print(f"raw label: {self.label}")
+        print(f"raw label shape: {self.label.shape}")
+        print(f"raw label unique: {np.unique(self.label)}")
+        
+        # distance_map = self.create_distance_map(self.label)
+        
+        det_result_dict = {}
+        img_basename = os.path.basename(self.imgPath)
+        det_result_dict[img_basename] = {}
+        det_result_dict[img_basename]["anly_output"] = []
+
+
+
+        for damage_idx in np.unique(self.label)[1:]:
+            
+            if damage_idx == 1:
+                damage_type = 'nusu'
+            elif damage_idx == 2:
+                damage_type = 'baektae'
+            elif damage_idx == 3:
+                damage_type = 'bakri'
+            elif damage_idx == 4 :
+                damage_type = 'bakrak'
+            elif damage_idx == 5 :
+                damage_type = 'kyunyeol'
+            elif damage_idx == 6 :
+                damage_type = 'cheolgeunnochul'
+            elif damage_idx == 7 :
+                damage_type = 'chungbunli'
+            elif damage_idx == 8 :
+                damage_type = 'kyunyeolbosu'
+        
+            labels = label(self.label == damage_idx)
+            damage_region_prop = regionprops_table(labels, properties=('label', "bbox", 'area'))
+
+            print(f"label: {labels}")
+            print(f"label shape: {labels.shape}")
+            
+            print(f"label unique: {np.unique(labels)}")
+            print(f"region prop: {damage_region_prop}")
+
+
+            
+            print(f"np.max(labels): {np.max(labels)}")
+            print(f"range(np.max(labels)): {range(np.max(labels))}")
+            for label_num in range(np.max(labels)) :
+        
+                if damage_region_prop['bbox-0'][label_num] > 50:
+
+                    a_label = labels == label_num + 1
+
+                    contours, _ = cv2.findContours(a_label.astype('uint8'), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+
+                    poly_step = 50 if damage_type == 'kyunyeol' else 100
+
+                    coords = []
+                    for countour_num in range(0, len(contours[0]), poly_step):
+                        coords.append([str(contours[0][countour_num][0][1]), str(contours[0][countour_num][0][0])])
+
+                    dmg_info = {}
+                    if damage_idx == 5:
+
+                        min_row = int(damage_region_prop['bbox-0'][label_num])
+                        max_row = int(damage_region_prop['bbox-2'][label_num])
+                        min_col = int(damage_region_prop['bbox-1'][label_num])
+                        max_col = int(damage_region_prop['bbox-3'][label_num])
+
+                        a_label_skel = a_label[min_row: max_row, min_col: max_col].copy()
+
+                        skel, distance = medial_axis(a_label_skel, return_distance=True)
+                        dist_label = distance * skel
+
+                        width = str(dist_label[np.nonzero(dist_label)].mean()) # * lenPerPixel)
+
+                        dmg_info['damage_type'] = damage_type
+                        dmg_info['id'] = str(label_num)
+                        dmg_info['length'] = str(np.sum(skel)) # * lenPerPixel)
+                        dmg_info['width'] = width
+                        dmg_info['height'] = ""
+                        dmg_info['area'] = ""
+                        dmg_info['coords'] = coords
+
+                    else:
+
+                        min_row = int(damage_region_prop['bbox-0'][label_num])
+                        max_row = int(damage_region_prop['bbox-2'][label_num])
+                        min_col = int(damage_region_prop['bbox-1'][label_num])
+                        max_col = int(damage_region_prop['bbox-3'][label_num])
+
+                        dmg_info['damage_type'] = damage_type
+                        dmg_info['id'] = str(label_num)
+                        dmg_info['length'] = ""
+                        dmg_info['width'] = str((max_col - min_col)) # * lenPerPixel)
+                        dmg_info['height'] = str((max_row - min_row)) # * lenPerPixel)
+                        dmg_info['area'] = str((max_col - min_col) * (max_row - min_row)) # * lenPerPixel * lenPerPixel)
+                        dmg_info['coords'] = coords
+
+                    det_result_dict[img_basename]["anly_output"].append(dmg_info)
+        
+        json_path = os.path.dirname(self.labelPath)
+        json_save_path = self.labelPath.replace(".png", ".json")
+        with open(json_save_path, 'w', encoding='utf8') as f:
+            json.dump(det_result_dict, f, ensure_ascii=False)
+
+
+
+
+
+

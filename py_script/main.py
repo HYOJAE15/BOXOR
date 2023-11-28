@@ -67,6 +67,7 @@ class MainWindow(QMainWindow, form_class_main,
         self.label_class = 0
         self.DL_class = 0
         self.label_segmentation = 1
+        self.label_opacity = False
         self.alpha = 0.5
         self.use_brush = False
         self.use_erase = False
@@ -526,26 +527,23 @@ class MainWindow(QMainWindow, form_class_main,
                             
         elif event.key() == 81: # Q key
             print("Q")
-            # self.labelOpacityCheckBox.setChecked(1-self.labelOpacityCheckBox.isChecked())
-            # self.labelOpacityOnOff()
-            # # Brush
-            # B_key 한번 press 후 Brush 기능 키고 끄자 
-
+            if self.label_opacity == False:
+                self.label_opacity = True
+            else :
+                self.label_opacity = False
+            self.labelOpacityOnOff()
+            
         # Save Image
         elif event.key() == 83 : # S key
             # Save the image
             if self.ControlKey : 
                 
-                imwrite(self.labelPath, self.label)
-
-                print('Save')
-                self.saveFolderName = os.path.dirname(self.imgPath)
-                self.saveImgName = os.path.basename(self.imgPath)
+                # imwrite(self.labelPath, self.label)
+                # self.saveImgName = os.path.basename(self.imgPath)
+                # self.situationLabel.setText(self.saveImgName + "을(를) 저장하였습니다.")
                 
-                print(f"self.saveFolderName : {self.saveFolderName}")
-                print(f"self.saveImgName : {self.saveImgName}")
-                
-                self.situationLabel.setText(self.saveImgName + "을(를) 저장하였습니다.")
+                print("quantify")
+                self.quantifyDamage()
 
             
         # Delete Image
@@ -664,10 +662,10 @@ class MainWindow(QMainWindow, form_class_main,
 
     def labelOpacityOnOff(self):
         
-        if self.labelOpacityCheckBox.isChecked():
-            self.alpha = self.lableOpacitySlider.value() / 100
+        if self.label_opacity:
+            self.alpha = 1
         else : 
-            self.alpha = 1 
+            self.alpha = 0.5 
         
         self.colormap = blendImageWithColorMap(self.img, self.label, self.label_palette, self.alpha)
         self.pixmap = QPixmap(cvtArrayToQImage(self.colormap))
