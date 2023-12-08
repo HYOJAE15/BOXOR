@@ -14,11 +14,11 @@
    <enum>Qt::StrongFocus</enum>
   </property>
   <property name="windowTitle">
-   <string>BOXOR</string>
+   <string>Kwater</string>
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>../Icon/chalk.png</normaloff>../Icon/chalk.png</iconset>
+    <normaloff>../Icon/kwater.jpg</normaloff>../Icon/kwater.jpg</iconset>
   </property>
   <property name="animated">
    <bool>true</bool>
