@@ -377,7 +377,6 @@
     <addaction name="actionOpenProject"/>
     <addaction name="actionAddNewImages"/>
     <addaction name="separator"/>
-    <addaction name="actionOpenFolder"/>
    </widget>
    <addaction name="menufile"/>
   </widget>
