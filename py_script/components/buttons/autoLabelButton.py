@@ -58,7 +58,7 @@ class AutoLabelButton :
                     # Convert normilized coordinates of polygons to coordinates of image
                     polygon[:,0] = polygon[:,0]*img_w
                     polygon[:,1] = polygon[:,1]*img_h
-                    polygon = polygon.astype(np.int)
+                    polygon = polygon.astype(np.int32)
                     
                     # Fill the Ploygon label
                     cv2.fillPoly(self.label, pts=[polygon], color=(cls_idx, cls_idx, cls_idx))
@@ -198,13 +198,6 @@ class AutoLabelButton :
 
 
     def quantifyDamage(self):
-        print("quantifyDamage")
-        
-        print(f"raw label: {self.label}")
-        print(f"raw label shape: {self.label.shape}")
-        print(f"raw label unique: {np.unique(self.label)}")
-        
-        # distance_map = self.create_distance_map(self.label)
         
         det_result_dict = {}
         img_basename = os.path.basename(self.imgPath)
@@ -235,16 +228,6 @@ class AutoLabelButton :
             labels = label(self.label == damage_idx)
             damage_region_prop = regionprops_table(labels, properties=('label', "bbox", 'area'))
 
-            print(f"label: {labels}")
-            print(f"label shape: {labels.shape}")
-            
-            print(f"label unique: {np.unique(labels)}")
-            print(f"region prop: {damage_region_prop}")
-
-
-            
-            print(f"np.max(labels): {np.max(labels)}")
-            print(f"range(np.max(labels)): {range(np.max(labels))}")
             for label_num in range(np.max(labels)) :
         
                 if damage_region_prop['bbox-0'][label_num] > 50:
