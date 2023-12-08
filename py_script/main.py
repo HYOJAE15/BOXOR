@@ -90,7 +90,6 @@ class MainWindow(QMainWindow, form_class_main,
         # self.treeView.keyPressEvent.connect(self.pressKey)
         
         # 1. Menu
-        self.actionOpenFolder.triggered.connect(self.actionOpenFolderFunction)
         self.actionAddNewImages.triggered.connect(self.addNewImages)
         self.actionNewProject.triggered.connect(self.createNewProjectDialog)
         self.actionOpenProject.triggered.connect(self.openExistingProject)
@@ -119,7 +118,7 @@ class MainWindow(QMainWindow, form_class_main,
         # 6. yolo Detect button
         # self.yoloDetectButton.clicked.connect(self.yoloDetection)
         self.yoloSegmentButton.clicked.connect(self.yoloSegmentation)
-        #self.roiAutoLabelButton.clicked.connect(self.runRoiAutoLabel)
+        # self.roiAutoLabelButton.clicked.connect(self.runRoiAutoLabel)
     
         # 7. handMoveTool
         self.hKey = False

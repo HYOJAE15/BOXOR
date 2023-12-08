@@ -16,35 +16,7 @@ class TreeView() :
     ### Folder Tree View ###
     ########################
 
-    def actionOpenFolderFunction(self) :
-        readFolderPath = self.dialog.getExistingDirectory(None, "Select Folder")
-        #readFolderPath = self.dialog.getOpenFileName(self,"select", "./", "Image (*.png *.jpg)" )
-        self.folderPath = readFolderPath
-        print(f"self.folderPath {self.folderPath}")
-        self.fileNameLabel.setText(self.folderPath)
-        slashSplit_imgPath = self.folderPath.split('/')
-        print(slashSplit_imgPath)
-        cityScapeDataset_folderPath = os.path.basename(self.folderPath)
-        print(os.path.basename(self.folderPath))
-
-        if "leftImg8bit" in slashSplit_imgPath and cityScapeDataset_folderPath in ["train", "val", "test"] :
-            self.openFolderPath = self.folderPath
-            print(f"cityscapedataset 준수 {self.openFolderPath}")
-
-        else :
-            self.openFolderPath = None
-            print(f"cityscapedataset 비준수 {self.openFolderPath}")
-
-
-        self.treeModel.setRootPath(self.folderPath)
-        self.indexRoot = self.treeModel.index(self.treeModel.rootPath())
-        
-        self.treeView.setModel(self.treeModel)
-        self.treeView.setRootIndex(self.indexRoot)
-        print(self.openFolderPath)
-        
-
-
+    
     def treeViewImage(self, index) :
 
         try : 
@@ -63,10 +35,7 @@ class TreeView() :
                 self.img = imread(self.imgPath)
                 self.src = cv2.cvtColor(self.img, cv2.COLOR_RGB2BGR)
                 self.label = imread(self.labelPath)
-                print(f"label type: {type(self.label)}")
-                print(f"label: {self.label}")
-                print(f"label: {np.unique(self.label)}")
-
+                
                 self.layers = createLayersFromLabel(self.label, len(self.label_palette))
                 self.colormap = blendImageWithColorMap(self.img, self.label, self.label_palette, self.alpha)
                 
