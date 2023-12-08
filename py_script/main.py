@@ -542,8 +542,13 @@ class MainWindow(QMainWindow, form_class_main,
                 self.saveImgName = os.path.basename(self.imgPath)
                 self.situationLabel.setText(self.saveImgName + "을(를) 저장하였습니다.")
                 
-                # print("quantify")
-                # self.quantifyDamage()
+                print("quantify")
+                self.quantifyDamage()
+                
+                color_path = self.labelPath.replace('_gtFine_labelIds.png', '_color.png')
+                colormap = blendImageWithColorMap(self.src, self.label, self.label_palette, self.alpha)
+                imwrite(color_path, colormap)
+
 
             
         # Delete Image

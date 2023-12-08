@@ -29,7 +29,6 @@ parser.add_argument("--date_stamp", default=True, type=bool,
 
 args = parser.parse_args()
 
-
 def imread(path):
     
     stream = open(path, "rb")
@@ -39,12 +38,33 @@ def imread(path):
 
     return bgrImage
 
-
 def imwrite(path, image):
     _, ext = os.path.splitext(path)
     cv2.imencode(ext, image)[1].tofile(path)
 
+def make_cityscapes_format_imagetype (image, save_dir, image_type) :
+    temp_img = cv2.imdecode(np.fromfile(image, dtype=np.uint8), cv2.IMREAD_UNCHANGED)
+    gt = np.zeros((temp_img.shape[0], temp_img.shape[1]), dtype=np.uint8)
+    
+    save_dir_img = os.path.join(save_dir, 'leftImg8bit')
+    save_dir_gt = os.path.join(save_dir, 'gtFine')
 
+    os.makedirs(save_dir_img, exist_ok=True)
+    os.makedirs(save_dir_gt, exist_ok=True)
+
+    img_filename = os.path.basename(image)
+    img_filename = img_filename.replace(f'.{image_type}', '_leftImg8bit.png')
+    
+    gt_filename = img_filename.replace('_leftImg8bit.png', '_gtFine_labelIds.png')
+
+    is_success, org_img = cv2.imencode(".png", temp_img)
+    org_img.tofile(os.path.join(save_dir_img, img_filename))
+
+    is_success, gt_img = cv2.imencode(".png", gt)
+    gt_img.tofile(os.path.join(save_dir_gt, gt_filename))
+    gt_path = os.path.join(save_dir_gt, gt_filename) 
+    
+    return gt_path
 
 def main():
 

@@ -208,8 +208,8 @@ class AutoLabelButton :
         
         det_result_dict = {}
         img_basename = os.path.basename(self.imgPath)
-        det_result_dict[img_basename] = {}
-        det_result_dict[img_basename]["anly_output"] = []
+        # det_result_dict[img_basename] = {}
+        det_result_dict["anly_output"] = []
 
 
 
@@ -257,7 +257,7 @@ class AutoLabelButton :
 
                     coords = []
                     for countour_num in range(0, len(contours[0]), poly_step):
-                        coords.append([str(contours[0][countour_num][0][1]), str(contours[0][countour_num][0][0])])
+                        coords.append([int(contours[0][countour_num][0][1]), int(contours[0][countour_num][0][0])])
 
                     dmg_info = {}
                     if damage_idx == 5:
@@ -297,7 +297,7 @@ class AutoLabelButton :
                         dmg_info['area'] = str((max_col - min_col) * (max_row - min_row)) # * lenPerPixel * lenPerPixel)
                         dmg_info['coords'] = coords
 
-                    det_result_dict[img_basename]["anly_output"].append(dmg_info)
+                    det_result_dict["anly_output"].append(dmg_info)
         
         json_path = os.path.dirname(self.labelPath)
         json_save_path = self.labelPath.replace(".png", ".json")
