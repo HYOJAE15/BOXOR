@@ -95,6 +95,35 @@ def blendImageWithColorMap(image, label, palette, alpha):
 
     return color_map
 
+def blendImageWithColorMap_rgb(image, label, palette, alpha):
+    """ blend image with color map 
+    Args: 
+        image (3d np.array): RGB image
+        label (2d np.array): 1 channel gray-scale image
+        pallete (2d np.array) 
+        alpha (float)
+
+    Returns: 
+        color_map (3d np.array): RGB image
+    """
+
+    color_map = np.zeros_like(image)
+        
+    for idx, color in enumerate(palette) : 
+        
+        r = color[0]
+        b = color[2]
+
+        color[0] = b
+        color[2] = r
+    
+        if idx == 0 :
+            color_map[label == idx, :] = image[label == idx, :] * 1
+        else :
+            color_map[label == idx, :] = image[label == idx, :] * alpha + color * (1-alpha)
+
+    return color_map
+
 
 
 def points_between(x1, y1, x2, y2):

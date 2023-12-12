@@ -37,6 +37,8 @@ from components.widgets.treeView import TreeView
 
 import torch
 
+import copy
+
 # Select folder "autolabel"
 # MainWindow UI
 project_ui = '../../ui_design/mainWindow.ui'
@@ -541,12 +543,17 @@ class MainWindow(QMainWindow, form_class_main,
                 self.saveImgName = os.path.basename(self.imgPath)
                 self.situationLabel.setText(self.saveImgName + "을(를) 저장하였습니다.")
                 
-                print("quantify")
                 self.quantifyDamage()
                 
                 color_path = self.labelPath.replace('_gtFine_labelIds.png', '_color.png')
-                colormap = blendImageWithColorMap(self.src, self.label, self.label_palette, self.alpha)
+                self.label_palette_rgb = copy.deepcopy(self.label_palette)
+                colormap = blendImageWithColorMap_rgb(self.src, self.label, self.label_palette_rgb, self.alpha)
                 imwrite(color_path, colormap)
+
+                img_down_path = color_path.replace('_color.png', '_downsampled.png')
+                img_down = cv2.resize(colormap, (int(colormap.shape[1]*0.1), int(colormap.shape[0]*0.1)), interpolation=cv2.INTER_AREA)
+                imwrite(img_down_path, img_down)
+
 
 
             
