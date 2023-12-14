@@ -102,8 +102,8 @@ class MainWindow(QMainWindow, form_class_main,
         self.scale = 1
         
         # 3. brush & erase tools
-        self.brushButton.clicked.connect(self.openBrushDialog)
-        self.eraseButton.clicked.connect(self.openEraseDialog)
+        self.brushButton.clicked.connect(self.brushTool)
+        self.eraseButton.clicked.connect(self.eraseTool)
 
         # 4. main Image Viewer
         self.mainImageViewer.mousePressEvent = self.mousePressEvent
@@ -141,6 +141,46 @@ class MainWindow(QMainWindow, form_class_main,
     ######################## 
     ### Image Processing ###
     ########################
+
+
+    def brushTool(self, event):
+        if self.use_brush == True :
+            self.use_brush = False
+            self.brushButton.setChecked(False)
+
+            if hasattr(self, 'brushMenu'):
+                self.brushMenu.close()  
+
+        else :
+            self.openBrushDialog(event)
+            # self.listWidget.setCurrentRow(self.label_class)
+            
+        if self.use_erase : 
+            self.use_erase = False
+            self.eraseButton.setChecked(False)
+            
+        if  hasattr(self, 'eraseMenu'):   
+            self.eraseMenu.close()
+
+    def eraseTool(self, event):
+        if self.use_erase == True :
+            self.use_erase = False
+            self.eraseButton.setChecked(False)
+
+            if  hasattr(self, 'eraseMenu'):   
+                self.eraseMenu.close()
+
+        else :
+            self.openEraseDialog(event)
+
+        if self.use_brush :
+            self.use_brush = False
+            self.brushButton.setChecked(False)
+
+        if hasattr(self, 'brushMenu'):
+            self.brushMenu.close()
+
+        
 
 
     def addNewImages(self):
@@ -367,6 +407,9 @@ class MainWindow(QMainWindow, form_class_main,
         print(createProjectFile_name)
 
         path = self.new_project_info['folder_path']
+        os.makedirs(os.path.join(path, 'leftImg8bit', 'images'), exist_ok=True)
+        os.makedirs(os.path.join(path, 'gtFine', 'images'), exist_ok=True)
+
         n_row = self.setCategoryDialog.tableWidget.rowCount()
 
         self.new_project_info['categories'] = []
@@ -550,9 +593,29 @@ class MainWindow(QMainWindow, form_class_main,
                 colormap = blendImageWithColorMap_rgb(self.src, self.label, self.label_palette_rgb, self.alpha)
                 imwrite(color_path, colormap)
 
-                img_down_path = color_path.replace('_color.png', '_downsampled.png')
-                img_down = cv2.resize(colormap, (int(colormap.shape[1]*0.1), int(colormap.shape[0]*0.1)), interpolation=cv2.INTER_AREA)
-                imwrite(img_down_path, img_down)
+                img_down_name = os.path.basename(self.imgPath)
+                img_down_name = img_down_name.replace('_leftImg8bit.png', '_downsampled.png')
+
+                img_down_path = os.path.dirname(self.imgPath)
+                img_down_path = os.path.dirname(img_down_path)
+                img_down_path = os.path.dirname(img_down_path)
+                img_down_path = os.path.join(img_down_path, 'downsampledImg', 'img')
+                os.makedirs(img_down_path, exist_ok=True)
+
+                img_down = cv2.resize(self.src, (int(self.src.shape[1]*0.1), int(self.src.shape[0]*0.1)), interpolation=cv2.INTER_AREA)
+                imwrite(os.path.join(img_down_path, img_down_name), img_down)
+                
+                color_img_down_name = os.path.basename(color_path)
+                color_img_down_name = color_img_down_name.replace('_color.png', '_color_downsampled.png')
+                
+                color_img_down_path = os.path.dirname(color_path)
+                color_img_down_path = os.path.dirname(color_img_down_path)
+                color_img_down_path = os.path.dirname(color_img_down_path)
+                color_img_down_path = os.path.join(color_img_down_path, 'downsampledImg', 'color')
+                os.makedirs(color_img_down_path, exist_ok=True)
+
+                color_img_down = cv2.resize(colormap, (int(colormap.shape[1]*0.1), int(colormap.shape[0]*0.1)), interpolation=cv2.INTER_AREA)
+                imwrite(os.path.join(color_img_down_path, color_img_down_name), color_img_down)
 
 
 
