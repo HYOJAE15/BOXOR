@@ -588,11 +588,22 @@ class MainWindow(QMainWindow, form_class_main,
                 
                 self.quantifyDamage()
                 
-                color_path = self.labelPath.replace('_gtFine_labelIds.png', '_color.png')
+                # Save the Color image
+                color_name = os.path.basename(self.labelPath)
+                color_name = color_name.replace('_gtFine_labelIds.png', '_color.png')
+
+                color_path = os.path.dirname(self.labelPath)
+                color_path = os.path.dirname(color_path)
+                color_path = os.path.dirname(color_path)
+                color_path = os.path.join(color_path, 'Color')
+                os.makedirs(color_path, exist_ok=True)
+                
                 self.label_palette_rgb = copy.deepcopy(self.label_palette)
                 colormap = blendImageWithColorMap_rgb(self.src, self.label, self.label_palette_rgb, self.alpha)
-                imwrite(color_path, colormap)
+                colormap_path = os.path.join(color_path, color_name)
+                imwrite(colormap_path, colormap)
 
+                # Save the downsampled 8bit image
                 img_down_name = os.path.basename(self.imgPath)
                 img_down_name = img_down_name.replace('_leftImg8bit.png', '_downsampled.png')
 
@@ -605,11 +616,11 @@ class MainWindow(QMainWindow, form_class_main,
                 img_down = cv2.resize(self.src, (int(self.src.shape[1]*0.1), int(self.src.shape[0]*0.1)), interpolation=cv2.INTER_AREA)
                 imwrite(os.path.join(img_down_path, img_down_name), img_down)
                 
-                color_img_down_name = os.path.basename(color_path)
+                # Save the downsampled color image
+                color_img_down_name = os.path.basename(colormap_path)
                 color_img_down_name = color_img_down_name.replace('_color.png', '_color_downsampled.png')
                 
-                color_img_down_path = os.path.dirname(color_path)
-                color_img_down_path = os.path.dirname(color_img_down_path)
+                color_img_down_path = os.path.dirname(colormap_path)
                 color_img_down_path = os.path.dirname(color_img_down_path)
                 color_img_down_path = os.path.join(color_img_down_path, 'downsampledImg', 'color')
                 os.makedirs(color_img_down_path, exist_ok=True)
